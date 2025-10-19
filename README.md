@@ -40,11 +40,15 @@ We used a **HTTP trigger** workflow with these steps:
    refresh_token=REFRESH_TOKEN
    ```
    Returns new `access_token` (valid 3h).
+   <img width="871" height="503" alt="image" src="https://github.com/user-attachments/assets/6265d5af-de5f-4359-95d5-d5881a551ca5" />
+
 3. **Fetch Netatmo Data (HTTP Request)** –
    ```http
    GET https://api.netatmo.com/api/gethomecoachsdata
-   Authorization: Bearer <access_token>
+   Authorization: Bearer {{steps.Get_Auth.$return_value.access_token}}
    ```
+   <img width="1195" height="645" alt="image" src="https://github.com/user-attachments/assets/95bc30b3-5bf0-4fc8-90c3-e3bca53b1268" />
+
 4. **Return HTTP Response** – Flatten JSON into a TRMNL-friendly payload:
    ```json
    {
@@ -58,6 +62,8 @@ We used a **HTTP trigger** workflow with these steps:
      "ts": "2025-10-19T18:40:42Z"
    }
    ```
+   <img width="886" height="501" alt="image" src="https://github.com/user-attachments/assets/174d7a26-f2e9-47f7-8e26-7f3070221962" />
+
 
 ➡️ Example Trigger URL: `https://xxxxxx.m.pipedream.net`
 
