@@ -1,6 +1,8 @@
 # TRMNL Netatmo Dashboard Plugin
 
 This project sets up a **TRMNL private plugin** to display live metrics from a Netatmo Home Coach (Temperature, CO₂, Humidity, Noise, Pressure) in a 2×2 dashboard layout with a footer for pressure.
+<img width="676" height="405" alt="image" src="https://github.com/user-attachments/assets/deba4d91-efeb-4d54-a4f5-2c811d5b8d83" />
+
 
 ---
 
