@@ -14,7 +14,8 @@ This project sets up a **TRMNL private plugin** to display live metrics from a N
 To work around this, we use **Pipedream** as a proxy/cache:  
 - Fetch from Netatmo only **once per hour**.  
 - Cache the latest data.  
-- TRMNL polls Pipedream as often as desired (5–10 min), but usually just gets the cached JSON.  
+- TRMNL polls Pipedream as often as desired (5–10 min), but usually just gets the cached JSON.
+- - I do't see the point in this bit if you pluging is configered to fetch once per hour btw.  
 
 ---
 
