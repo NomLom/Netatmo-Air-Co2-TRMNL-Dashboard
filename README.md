@@ -19,7 +19,7 @@ To work around this, we use **Pipedream** as a proxy/cache:
 ## ⚙️ Setup Steps
 
 ### 1. Netatmo App & Tokens
-1. Create a Netatmo Developer App → get `client_id` and `client_secret`.
+1. Create a Netatmo Developer App → get `client_id` and `client_secret` https://dev.netatmo.com/apps/.
 2. Use OAuth2 to generate:
    - `access_token`
    - `refresh_token`
@@ -150,6 +150,8 @@ We designed a **2×2 grid** with a footer:
 - Pipedream handles token refresh + data fetch + JSON flattening.  
 - TRMNL plugin polls the Pipedream endpoint hourly.  
 - Dashboard shows CO₂, Temp, Noise, Humidity in quads, Pressure in footer, with alerts.  
+<img width="939" height="183" alt="image" src="https://github.com/user-attachments/assets/313d949f-5640-4c9c-bc36-6ce8528622b6" />
+
 
 ---
 
