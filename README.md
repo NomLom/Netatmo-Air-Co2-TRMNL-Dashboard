@@ -187,7 +187,7 @@ Example output:
 - Netatmo **access tokens** are valid ~3 hours.  
 - Netatmo **refresh tokens** can only be exchanged **24 times per day per user/app**.  
 - This service refreshes once every ~3 hours, staying safe under the limit.  
-- TRMNL polls every 5 minutes but the Pi caches Netatmo data for 5 minutes to avoid extra API calls.  
+- TRMNL polls every 15 minutes but the Pi caches Netatmo data for 5 minutes to avoid extra API calls.  
 
 ---
 
