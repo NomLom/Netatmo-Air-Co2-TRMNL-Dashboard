@@ -9,7 +9,7 @@ It provides:
 - 🌐 Optional DuckDNS + port forwarding for external access.  
 - 📊 TRMNL plugin markup for a clean 2×2 quadrant dashboard with a footer.
 
-<img width="675" height="404" alt="image" src="https://github.com/user-attachments/assets/cd90fa92-3d38-4151-a4d3-5d3106a88887" />
+<img width="675" height="404" alt="image" src="https://github.com/user-attachments/assets/c90dc7cb-ccd0-4cea-b2e9-ec4e9d65e6f8" />
 
 
 ---
@@ -29,7 +29,7 @@ sudo apt-get update
 sudo apt-get install -y python3 python3-pip python3-venv
 ```
 
-Clone or create a project folder:
+Create project folder:
 ```bash
 mkdir ~/netatmo-trmnl && cd ~/netatmo-trmnl
 ```
@@ -38,15 +38,15 @@ mkdir ~/netatmo-trmnl && cd ~/netatmo-trmnl
 
 ## 3. Environment file 🔑
 
-Create `netatmo.env` in the project folder:
+Create `netatmo.env`:
 
 ```ini
 NETATMO_CLIENT_ID=your_client_id
 NETATMO_CLIENT_SECRET=your_client_secret
 NETATMO_REFRESH_TOKEN=your_refresh_token
-# Optional: pin to a device
-NETATMO_DEVICE_ID=70:ee:50:af:af:90
 PORT=8000
+# Optional device id:
+# NETATMO_DEVICE_ID=70:ee:50:af:af:90
 ```
 
 ---
@@ -61,15 +61,13 @@ pip3 install bottle requests python-dotenv
 
 ## 5. The Bottle App (`app.py`) 🐍
 
-```python
-# Full code from app.py here (same as provided in chat)
-```
+Full source provided in `app.py` above.
 
 ---
 
 ## 6. Run as a service ⚙️
 
-Create `netatmo.service`:
+Create `/etc/systemd/system/netatmo.service`:
 
 ```ini
 [Unit]
@@ -89,7 +87,7 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Enable it:
+Enable:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now netatmo.service
@@ -108,7 +106,7 @@ journalctl -u netatmo.service -f
 curl http://192.168.0.199:8000/metrics
 ```
 
-Expected output:
+Example output:
 ```json
 {
   "success": true,
@@ -137,12 +135,55 @@ Expected output:
 ### Markup (TRMNL dashboard)
 
 ```html
-<!-- Full TRMNL HTML markup goes here (same as provided in chat) -->
+<div class="layout layout--col gap--none" style="height:100%; color:black;">
+
+  <div class="title_bar bg--gray-75 border--h-6 rounded--none" style="color:black;">
+    <span class="title" style="color:black;">Netatmo</span>
+    <span class="instance" style="color:black;">Last updated: {{ ts | default: time_utc | date: "%Y-%m-%d %H:%M" }}</span>
+  </div>
+
+  <div style="display:flex; flex-direction:column; flex:1 1 auto; min-height:0;">
+    <div class="grid grid--cols-2 gap--none"
+         style="flex:1 1 auto; min-height:0; grid-template-rows: 1fr 1fr; grid-auto-rows: minmax(0,1fr);">
+
+      <div class="item {% if co2_ppm > 1100 %}bg--gray-60{% endif %} border--h-4 border--v-4"
+           style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <span class="value value--tnums value--xxxlarge" data-value-fit="true">{{ co2_ppm }}</span>
+        <span class="label">ppm CO₂</span>
+      </div>
+
+      <div class="item border--h-4 border--v-4"
+           style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <span class="value value--tnums value--xxxlarge" data-value-fit="true">{{ temperature_c }}</span>
+        <span class="label">°C Temperature</span>
+      </div>
+
+      <div class="item border--h-4 border--v-4"
+           style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <span class="value value--tnums value--xxxlarge" data-value-fit="true">{{ noise_db }}</span>
+        <span class="label">dB Noise</span>
+      </div>
+
+      <div class="item border--h-4 border--v-4"
+           style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <span class="value value--tnums value--xxxlarge" data-value-fit="true">{{ humidity_pct }}</span>
+        <span class="label">% Humidity</span>
+      </div>
+    </div>
+
+    <div class="item {% if pressure_hpa < 995 %}bg--gray-70{% endif %} border--h-6 rounded--none"
+         style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+      <span class="value value--tnums value--xlarge">{{ pressure_hpa }}</span>
+      <span class="label">hPa Pressure{% if pressure_hpa < 995 %} — Low{% endif %}</span>
+    </div>
+  </div>
+</div>
 ```
 
 ---
 
 ## 9. Notes on Rate Limits ⏱️
+
 - Netatmo **access tokens** are valid ~3 hours.  
 - Netatmo **refresh tokens** can only be exchanged **24 times per day per user/app**.  
 - This service refreshes once every ~3 hours, staying safe under the limit.  
@@ -151,4 +192,5 @@ Expected output:
 ---
 
 ## ⚠️ Disclaimer
+
 This README was generated with the assistance of AI 🤖. Please review and adapt the instructions for your own environment, security requirements, and version of software.  
