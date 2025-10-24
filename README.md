@@ -127,7 +127,7 @@ Example output:
 ## 8. TRMNL Plugin Setup 🖥️
 
 - Strategy: **Polling**  
-- Polling URL: `http://slidek9.duckdns.org:8000/metrics`  
+- Polling URL: `<your dynampic IP>  
 - Verb: `GET`  
 - Interval: **5 minutes**  
 - Remove bleed margin: **Yes**  
