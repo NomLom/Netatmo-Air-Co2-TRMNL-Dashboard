@@ -61,7 +61,107 @@ pip3 install bottle requests python-dotenv
 
 ## 5. The Bottle App (`app.py`) 🐍
 
-Full source provided in `app.py` above.
+```
+import json, os, time
+from pathlib import Path
+from datetime import datetime, timezone
+import requests
+from dotenv import load_dotenv
+from bottle import Bottle, response, run
+
+load_dotenv("netatmo.env")
+
+CLIENT_ID     = os.environ["NETATMO_CLIENT_ID"]
+CLIENT_SECRET = os.environ["NETATMO_CLIENT_SECRET"]
+REFRESH_TOKEN = os.environ["NETATMO_REFRESH_TOKEN"]
+DEVICE_ID     = os.environ.get("NETATMO_DEVICE_ID") or None
+PORT          = int(os.environ.get("PORT", "8000"))
+
+CACHE_PATH    = Path("netatmo_cache.json")
+DATA_TTL      = 300   # 5 minutes
+EARLY_REFRESH = 120   # refresh 2 min early
+
+app = Bottle()
+
+def _now_ms(): return int(time.time() * 1000)
+
+def load_cache():
+    if CACHE_PATH.exists():
+        try: return json.loads(CACHE_PATH.read_text())
+        except: pass
+    return {"access_token": None, "refresh_token": REFRESH_TOKEN, "token_expires_at": 0, "latest_data": None, "latest_fetched_at": 0}
+
+def save_cache(c): CACHE_PATH.write_text(json.dumps(c, indent=2))
+
+def refresh_access_token(cache):
+    url = "https://api.netatmo.com/oauth2/token"
+    data = {
+        "grant_type": "refresh_token",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "refresh_token": cache.get("refresh_token") or REFRESH_TOKEN
+    }
+    r = requests.post(url, data=data, timeout=30)
+    r.raise_for_status()
+    body = r.json()
+    cache["access_token"] = body["access_token"]
+    cache["refresh_token"] = body.get("refresh_token", cache.get("refresh_token"))
+    cache["token_expires_at"] = _now_ms() + int(body.get("expires_in", 10800)) * 1000
+    save_cache(cache)
+
+def need_refresh(cache):
+    return (not cache.get("access_token")) or (_now_ms() > (cache.get("token_expires_at", 0) - EARLY_REFRESH*1000))
+
+def fetch_homecoach(access_token):
+    url = "https://api.netatmo.com/api/gethomecoachsdata"
+    headers = {"Authorization": f"Bearer {access_token}", "User-Agent": "netatmo-pi/1"}
+    r = requests.get(url, headers=headers, timeout=30)
+    if r.status_code == 401: raise PermissionError("unauthorized")
+    r.raise_for_status()
+    devices = r.json()["body"].get("devices", [])
+    if not devices: raise RuntimeError("No devices found")
+    device = devices[0]
+    if DEVICE_ID:
+        device = next((d for d in devices if d.get("_id") == DEVICE_ID), device)
+    dash = device.get("dashboard_data", {})
+    ts = int(dash.get("time_utc", 0))
+    iso = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
+    return {
+        "success": True,
+        "temperature_c": dash.get("Temperature"),
+        "co2_ppm": dash.get("CO2"),
+        "humidity_pct": dash.get("Humidity"),
+        "noise_db": dash.get("Noise"),
+        "pressure_hpa": dash.get("Pressure"),
+        "time_utc": ts,
+        "ts": iso,
+        "device_id": device.get("_id"),
+        "station_name": device.get("station_name", "")
+    }
+
+@app.route("/metrics")
+def metrics():
+    cache = load_cache()
+    if need_refresh(cache):
+        try: refresh_access_token(cache)
+        except Exception as e:
+            if cache.get("latest_data"):
+                return {**cache["latest_data"], "stale": True, "error": str(e)}
+            response.status = 503; return {"success": False, "error": str(e)}
+
+    fresh_enough = (_now_ms() - cache.get("latest_fetched_at", 0)) < (DATA_TTL * 1000)
+    if not fresh_enough:
+        data = fetch_homecoach(cache["access_token"])
+        cache["latest_data"] = data
+        cache["latest_fetched_at"] = _now_ms()
+        save_cache(cache)
+
+    response.content_type = "application/json"
+    return json.dumps(cache["latest_data"])
+
+if __name__ == "__main__":
+    run(app, host="0.0.0.0", port=PORT)
+```
 
 ---
 
